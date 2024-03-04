@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -34,15 +34,44 @@ async function run() {
       const result = await cursor.toArray();
       res.send(result);
     })
+    // upeate
+    app.get('/car/:id', async(req,res)=>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const result = await carCollection.findOne(query);
+      res.send(result);
+    })
     // creat
     app.post('/car', async(req,res)=>{
       const newCar = req.body;
       const result = await carCollection.insertOne(newCar);
       res.send(result);
     })
-
-
-
+    // delete
+    app.delete('/car/:id', async(req,res)=>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const result = await carCollection.deleteOne(query);
+      res.send(result);
+    })
+    // update
+    app.put('/car/:id', async(req,res)=>{
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)};
+      const options = { upsert: true};
+      const updatedCar = req.body;
+      const car ={
+        $set:{
+          carName: updatedCar.carName,
+          engineName: updatedCar.engineName,
+          cubicCC:updatedCar.cubicCC,
+          price:updatedCar.price,
+          photo:updatedCar.photo
+        }
+      }
+      const result = await carCollection.updateOne(filter,car,options);
+      res.send(result);
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
