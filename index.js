@@ -11,7 +11,6 @@ app.use(express.json());
 
 // ~~~~~~~~~~~~~~~~~~ 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.sldyvva.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
-console.log(uri);
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
   serverApi: {
@@ -28,6 +27,8 @@ async function run() {
 
     // collections
     const carCollection = client.db('carDB').collection('car');
+    const userCollection = client.db('carDB').collection('user');
+
     // read
     app.get('/car', async(req,res) =>{
       const cursor = carCollection.find();
@@ -72,6 +73,41 @@ async function run() {
       const result = await carCollection.updateOne(filter,car,options);
       res.send(result);
     })
+    // user related apis
+
+    // read user
+    app.get('/user', async(req,res)=>{
+      const cursor = userCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    })
+
+    // creat user
+    app.post('/user', async(req,res)=>{
+      const user = req.body;
+      const result = await userCollection.insertOne(user);
+      res.send(result);
+    })
+    // update user
+    app.patch('/user', async(req,res)=>{
+      const user = req.body;
+      const filter = {email: user.email};
+      const updatedDoc = {
+        $set:{
+          lastLoggedAt: user.lastLoggedAt
+        }
+      }
+      const result = await userCollection.updateOne(filter,updatedDoc);
+      res.send(result);
+    })
+    // delete user
+    app.delete('/user/:id', async(req,res)=>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const result = await userCollection.deleteOne(query);
+      res.send(result)
+    })
+    // user related apis
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
